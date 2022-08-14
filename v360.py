@@ -3,10 +3,10 @@ import numpy as np
 
 
 KEYMAP = {
-    'BtnA':         (events.EV_KEY, ecodes.BTN_A),
-    'BtnB':         (events.EV_KEY, ecodes.BTN_B),
-    'BtnX':         (events.EV_KEY, ecodes.BTN_X),
-    'BtnY':         (events.EV_KEY, ecodes.BTN_Y),
+    'BtnA':         (events.EV_KEY, ecodes.BTN_SOUTH),
+    'BtnB':         (events.EV_KEY, ecodes.BTN_EAST),
+    'BtnX':         (events.EV_KEY, ecodes.BTN_WEST),
+    'BtnY':         (events.EV_KEY, ecodes.BTN_NORTH),
     'BtnBack':      (events.EV_KEY, ecodes.BTN_SELECT),
     'BtnStart':     (events.EV_KEY, ecodes.BTN_START),
     'BtnShoulderL': (events.EV_KEY, ecodes.BTN_TL),

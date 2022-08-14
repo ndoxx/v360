@@ -117,6 +117,12 @@ I run this on terminal A. On terminal B, I can `sudo evtest` and look for the de
 ## What I don't know
 
 * The ranges in the `AbsInfo` structures for the analog controls. I don't know how to scale them properly, and I don't know if they accept negative values (I guess not).
+    -> They do accept negative values
+
+
+# Test GUI
+
+I coded a small GUI with `dearpygui` to test the virtual controller in game. All controls are mapped to a UI widget, and I can check with evtest that everything is fine.
 
 
 

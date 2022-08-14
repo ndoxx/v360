@@ -74,6 +74,8 @@ class MainWindow:
     def button_pressed(self, sender, app_data, user_data):
         key, value = user_data
         self.controller.set_value(key, value)
+        # TMP: Release immediately
+        self.controller.set_value(key, 0)
 
     def setup_themes(self):
         colors_rgb = [

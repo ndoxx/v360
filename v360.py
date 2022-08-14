@@ -1,7 +1,6 @@
 from evdev import events, ecodes, UInput, AbsInfo
-import numpy as np
 
-
+# Associate control names to event type and key code
 KEYMAP = {
     'BtnA':         (events.EV_KEY, ecodes.BTN_A),
     'BtnB':         (events.EV_KEY, ecodes.BTN_B),
@@ -19,6 +18,7 @@ KEYMAP = {
     'DpadY':        (events.EV_ABS, ecodes.ABS_HAT0Y),
 }
 
+# Associate analog control names to AbsInfo structures to specify range and behavior
 ABSINFO = {
     'LeftX':    AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=0, resolution=0),
     'LeftY':    AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=0, resolution=0),
@@ -28,6 +28,7 @@ ABSINFO = {
     'DpadY':    AbsInfo(value=0, min=-128, max=127, fuzz=0, flat=0, resolution=0),
 }
 
+# Associate Dpad binary mask to axis and direction
 DPAD_TO_KEY_VAL = {
     1: ("DpadY", -1),
     2: ("DpadY", 1),
@@ -37,6 +38,12 @@ DPAD_TO_KEY_VAL = {
 
 
 def analog_remap(value, min_val, max_val, centered: bool):
+    """
+    Remap a centered value (in [-1,1]) or a non-centered
+    value (in [0,1]) to the interval [min_val, max_val].
+    Values are first clamped between -1 and 1 if centered
+    or 0 and 1 if not centered.
+    """
     # Clamp value
     value = (1 + max(-1, min(1, value))) / \
         2 if centered else max(0, min(1, value))
@@ -45,6 +52,11 @@ def analog_remap(value, min_val, max_val, centered: bool):
 
 
 class VirtualController():
+    """
+    This class creates a UInput device and allows to send
+    events to it.
+    """
+
     def __init__(self):
         key_events = [tup[1]
                       for tup in KEYMAP.values() if tup[0] == events.EV_KEY]
@@ -75,6 +87,10 @@ class VirtualController():
 
 
 class FFXController:
+    """
+    Linux compatible drop-in replacement for FFX_Xbox.vgTranslator.
+    """
+
     def __init__(self):
         self.gamepad = VirtualController()
 
@@ -84,19 +100,23 @@ class FFXController:
             print(f"ERROR - OLD MOVEMENT COMMAND FOUND: {xKey}")
             self.set_neutral()
 
-        # Dpad and triggers handled like buttons (on/off control)
+        # Dpad handled like buttons (on/off control)
         if xKey == "Dpad":
-            xKey, value = DPAD_TO_KEY_VAL[value]
+            if value != 0:
+                xKey, value = DPAD_TO_KEY_VAL[value]
+            else:
+                self.gamepad.send("DpadX", 0)
+                self.gamepad.send("DpadY", 0)
+                return
 
-        # Press and release
+        # Press or release
         self.gamepad.send(xKey, value)
-        self.gamepad.send(xKey, 0)
 
     def set_movement(self, x, y):
+        # Update left stick value
         self.gamepad.send("LeftX", x)
         self.gamepad.send("LeftY", y)
 
     def set_neutral(self):
-        # Only the left stick needs be reset
-        self.gamepad.send("LeftX", 0)
-        self.gamepad.send("LeftY", 0)
+        for key in KEYMAP.keys():
+            self.gamepad.send(key, 0)

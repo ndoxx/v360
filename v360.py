@@ -3,10 +3,10 @@ import numpy as np
 
 
 KEYMAP = {
-    'BtnA':         (events.EV_KEY, ecodes.BTN_SOUTH),
-    'BtnB':         (events.EV_KEY, ecodes.BTN_EAST),
-    'BtnX':         (events.EV_KEY, ecodes.BTN_WEST),
-    'BtnY':         (events.EV_KEY, ecodes.BTN_NORTH),
+    'BtnA':         (events.EV_KEY, ecodes.BTN_A),
+    'BtnB':         (events.EV_KEY, ecodes.BTN_B),
+    'BtnX':         (events.EV_KEY, ecodes.BTN_X),
+    'BtnY':         (events.EV_KEY, ecodes.BTN_Y),
     'BtnBack':      (events.EV_KEY, ecodes.BTN_SELECT),
     'BtnStart':     (events.EV_KEY, ecodes.BTN_START),
     'BtnShoulderL': (events.EV_KEY, ecodes.BTN_TL),
@@ -20,12 +20,12 @@ KEYMAP = {
 }
 
 ABSINFO = {
-    'LeftX':    AbsInfo(value=0, min=0, max=255, fuzz=0, flat=0, resolution=0),
-    'LeftY':    AbsInfo(value=0, min=0, max=255, fuzz=0, flat=0, resolution=0),
+    'LeftX':    AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=0, resolution=0),
+    'LeftY':    AbsInfo(value=0, min=-32768, max=32767, fuzz=0, flat=0, resolution=0),
     'TriggerL': AbsInfo(value=0, min=0, max=255, fuzz=0, flat=0, resolution=0),
     'TriggerR': AbsInfo(value=0, min=0, max=255, fuzz=0, flat=0, resolution=0),
-    'DpadX':    AbsInfo(value=0, min=0, max=255, fuzz=0, flat=0, resolution=0),
-    'DpadY':    AbsInfo(value=0, min=0, max=255, fuzz=0, flat=0, resolution=0),
+    'DpadX':    AbsInfo(value=0, min=-128, max=127, fuzz=0, flat=0, resolution=0),
+    'DpadY':    AbsInfo(value=0, min=-128, max=127, fuzz=0, flat=0, resolution=0),
 }
 
 DPAD_TO_KEY_VAL = {
@@ -36,15 +36,12 @@ DPAD_TO_KEY_VAL = {
 }
 
 
-def clamp(value):
-    return max(-1, min(1, value))
-
-
-def rescale(value, centered: bool):
-    if centered:
-        return int(255 * (1 + value) / 2)
-    else:
-        return int(255 * value)
+def analog_remap(value, min_val, max_val, centered: bool):
+    # Clamp value
+    value = (1 + max(-1, min(1, value))) / \
+        2 if centered else max(0, min(1, value))
+    # Translate and rescale
+    return int(min_val+(max_val-min_val)*value)
 
 
 class VirtualController():
@@ -70,7 +67,8 @@ class VirtualController():
         if event_type == events.EV_ABS:
             # Trigger values are not centered (in [0,1])
             is_trigger = key == "TriggerL" or key == "TriggerR"
-            value = rescale(clamp(value), not is_trigger)
+            value = analog_remap(
+                value, ABSINFO[key].min, ABSINFO[key].max, not is_trigger)
 
         self.device.write(event_type, key_code, value)
         self.device.syn()

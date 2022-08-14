@@ -31,8 +31,10 @@ def lighten(c, a):
 
 
 class MainWindow:
-    def __init__(self):
+    def __init__(self, width, height):
         self.controller = FFXController()
+        self.width = width
+        self.height = height
         self.size = 150
         self.center = [self.size/2, self.size/2]
         self.thickness = 5
@@ -40,6 +42,8 @@ class MainWindow:
         self.inner_radius = self.size/20
         self.color = [128, 128, 128]
         self.position = self.center
+        self.window_options = {
+            "no_resize": True, "no_scrollbar": True, "no_title_bar": True, "no_move": True}
 
     def update_stick(self):
         # Translate w.r.t center (neutral) position
@@ -160,7 +164,7 @@ class MainWindow:
             dpg.add_mouse_click_handler(callback=self.on_mouse_down)
             dpg.add_mouse_release_handler(callback=self.on_mouse_release)
 
-        with dpg.window(label="Gamepad", tag="__gamepad_window"):
+        with dpg.window(label="Gamepad", tag="__gamepad_window", width=self.width, height=self.height, **self.window_options):
             self.setup_themes()
             with dpg.table(header_row=False):
                 dpg.add_table_column()
@@ -194,6 +198,7 @@ class MainWindow:
                             with dpg.group():
                                 dpg.add_spacer(height=35)
                                 with dpg.group(horizontal=True):
+                                    dpg.add_spacer(width=20)
                                     self.render_dpad()
                                     dpg.add_spacer(width=60)
 
@@ -207,13 +212,16 @@ class MainWindow:
 
 
 def main(argv):
+    win_width = 580
+    win_height = 250
     local = Path(__file__).parent
     init_path = local / "gui.ini"
-    window = MainWindow()
+    window = MainWindow(win_width, win_height)
 
     dpg.create_context()
-    dpg.configure_app(init_file=init_path, docking=True)
-    dpg.create_viewport(title="v360 GUI", width=590, height=277)
+    # dpg.configure_app(init_file=init_path, docking=True)
+    dpg.configure_app()
+    dpg.create_viewport(title="v360 GUI", width=win_width, height=win_height)
     dpg.setup_dearpygui()
 
     window.render()

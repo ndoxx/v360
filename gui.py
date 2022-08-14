@@ -6,9 +6,7 @@ import numpy as np
 from v360 import FFXController
 
 """
-TODO: merge windows
-    -> big table as layout
-    -> get stick center position programatically
+
 """
 
 EPS = 1e-5
@@ -139,21 +137,21 @@ class MainWindow:
 
             with dpg.table_row():
                 dpg.add_spacer()
-                dpg.add_button(
-                    label=" U ", callback=self.button_pressed, user_data=("Dpad", 1))
+                dpg.add_button(arrow=True, direction=dpg.mvDir_Up,
+                               callback=self.button_pressed, user_data=("Dpad", 1))
                 dpg.add_spacer()
 
             with dpg.table_row():
-                dpg.add_button(
-                    label=" L ", callback=self.button_pressed, user_data=("Dpad", 4))
+                dpg.add_button(arrow=True, direction=dpg.mvDir_Left,
+                               callback=self.button_pressed, user_data=("Dpad", 4))
                 dpg.add_spacer()
-                dpg.add_button(
-                    label=" R ", callback=self.button_pressed, user_data=("Dpad", 8))
+                dpg.add_button(arrow=True, direction=dpg.mvDir_Right,
+                               callback=self.button_pressed, user_data=("Dpad", 8))
 
             with dpg.table_row():
                 dpg.add_spacer()
-                dpg.add_button(
-                    label=" D ", callback=self.button_pressed, user_data=("Dpad", 2))
+                dpg.add_button(arrow=True, direction=dpg.mvDir_Down,
+                               callback=self.button_pressed, user_data=("Dpad", 2))
                 dpg.add_spacer()
 
     def render(self):
@@ -169,14 +167,14 @@ class MainWindow:
                 dpg.add_table_column()
                 with dpg.table_row():
                     dpg.add_button(
-                        label="ShdL", callback=self.button_pressed, user_data=("BtnShoulderL", 1))
+                        label="Shoulder L", callback=self.button_pressed, user_data=("BtnShoulderL", 1), width=300)
                     dpg.add_button(
-                        label="ShdR", callback=self.button_pressed, user_data=("BtnShoulderR", 1))
+                        label="Shoulder R", callback=self.button_pressed, user_data=("BtnShoulderR", 1), width=300)
                 with dpg.table_row():
                     dpg.add_button(
-                        label="TrgL", callback=self.button_pressed, user_data=("TriggerL", 1))
+                        label="Trigger L", callback=self.button_pressed, user_data=("TriggerL", 1), width=300)
                     dpg.add_button(
-                        label="TrgR", callback=self.button_pressed, user_data=("TriggerR", 1))
+                        label="Trigger R", callback=self.button_pressed, user_data=("TriggerR", 1), width=300)
 
             with dpg.table(header_row=False):
                 dpg.add_table_column()
@@ -188,15 +186,24 @@ class MainWindow:
 
                         with dpg.table_row():
                             dpg.add_button(
-                                label="Back", callback=self.button_pressed, user_data=("BtnBack", 1))
+                                label="Back", callback=self.button_pressed, user_data=("BtnBack", 1), width=150)
                             dpg.add_button(
-                                label="Start", callback=self.button_pressed, user_data=("BtnStart", 1))
+                                label="Start", callback=self.button_pressed, user_data=("BtnStart", 1), width=150)
 
                         with dpg.table_row():
-                            self.render_dpad()
+                            with dpg.group():
+                                dpg.add_spacer(height=35)
+                                with dpg.group(horizontal=True):
+                                    self.render_dpad()
+                                    dpg.add_spacer(width=60)
+
                             self.render_stick()
 
-                    self.render_right_buttons()
+                    with dpg.group():
+                        dpg.add_spacer(height=60)
+                        with dpg.group(horizontal=True):
+                            dpg.add_spacer(width=60)
+                            self.render_right_buttons()
 
 
 def main(argv):
@@ -206,7 +213,7 @@ def main(argv):
 
     dpg.create_context()
     dpg.configure_app(init_file=init_path, docking=True)
-    dpg.create_viewport(title="v360 dpg", width=600, height=300)
+    dpg.create_viewport(title="v360 GUI", width=590, height=277)
     dpg.setup_dearpygui()
 
     window.render()

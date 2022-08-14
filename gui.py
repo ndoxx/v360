@@ -71,10 +71,12 @@ class MainWindow:
         self.position = self.center
         self.update_stick()
 
-    def button_pressed(self, sender, app_data, user_data):
-        key, value = user_data
+    def button_down(self, sender, app_data, user_data):
+        key, value = dpg.get_item_user_data(app_data)
         self.controller.set_value(key, value)
-        # TMP: Release immediately
+
+    def button_release(self, sender, app_data, user_data):
+        key, value = dpg.get_item_user_data(app_data)
         self.controller.set_value(key, 0)
 
     def setup_themes(self):
@@ -114,24 +116,24 @@ class MainWindow:
 
             with dpg.table_row():
                 dpg.add_spacer()
-                dpg.add_button(
-                    label=" Y ", callback=self.button_pressed, user_data=("BtnY", 1))
+                dpg.add_button(label=" Y ", tag="__btn_Y",
+                               user_data=("BtnY", 1))
                 dpg.bind_item_theme(dpg.last_item(), "__btn_theme_0")
                 dpg.add_spacer()
 
             with dpg.table_row():
                 dpg.add_button(
-                    label=" X ", callback=self.button_pressed, user_data=("BtnX", 1))
+                    label=" X ", tag="__btn_X", user_data=("BtnX", 1))
                 dpg.bind_item_theme(dpg.last_item(), "__btn_theme_1")
                 dpg.add_spacer()
                 dpg.add_button(
-                    label=" B ", callback=self.button_pressed, user_data=("BtnB", 1))
+                    label=" B ", tag="__btn_B", user_data=("BtnB", 1))
                 dpg.bind_item_theme(dpg.last_item(), "__btn_theme_2")
 
             with dpg.table_row():
                 dpg.add_spacer()
                 dpg.add_button(
-                    label=" A ", callback=self.button_pressed, user_data=("BtnA", 1))
+                    label=" A ", tag="__btn_A", user_data=("BtnA", 1))
                 dpg.bind_item_theme(dpg.last_item(), "__btn_theme_3")
                 dpg.add_spacer()
 
@@ -144,20 +146,20 @@ class MainWindow:
             with dpg.table_row():
                 dpg.add_spacer()
                 dpg.add_button(arrow=True, direction=dpg.mvDir_Up,
-                               callback=self.button_pressed, user_data=("Dpad", 1))
+                               tag="__btn_dpad_u", user_data=("Dpad", 1))
                 dpg.add_spacer()
 
             with dpg.table_row():
                 dpg.add_button(arrow=True, direction=dpg.mvDir_Left,
-                               callback=self.button_pressed, user_data=("Dpad", 4))
+                               tag="__btn_dpad_l", user_data=("Dpad", 4))
                 dpg.add_spacer()
                 dpg.add_button(arrow=True, direction=dpg.mvDir_Right,
-                               callback=self.button_pressed, user_data=("Dpad", 8))
+                               tag="__btn_dpad_r", user_data=("Dpad", 8))
 
             with dpg.table_row():
                 dpg.add_spacer()
                 dpg.add_button(arrow=True, direction=dpg.mvDir_Down,
-                               callback=self.button_pressed, user_data=("Dpad", 2))
+                               tag="__btn_dpad_d", user_data=("Dpad", 2))
                 dpg.add_spacer()
 
     def render(self):
@@ -166,6 +168,10 @@ class MainWindow:
             dpg.add_mouse_click_handler(callback=self.on_mouse_down)
             dpg.add_mouse_release_handler(callback=self.on_mouse_release)
 
+        with dpg.item_handler_registry(tag="__btn_handler"):
+            dpg.add_item_activated_handler(callback=self.button_down)
+            dpg.add_item_deactivated_handler(callback=self.button_release)
+
         with dpg.window(label="Gamepad", tag="__gamepad_window", width=self.width, height=self.height, **self.window_options):
             self.setup_themes()
             with dpg.table(header_row=False):
@@ -173,14 +179,14 @@ class MainWindow:
                 dpg.add_table_column()
                 with dpg.table_row():
                     dpg.add_button(
-                        label="Shoulder L", callback=self.button_pressed, user_data=("BtnShoulderL", 1), width=300)
+                        label="Shoulder L", tag="__btn_sh_l", user_data=("BtnShoulderL", 1), width=300)
                     dpg.add_button(
-                        label="Shoulder R", callback=self.button_pressed, user_data=("BtnShoulderR", 1), width=300)
+                        label="Shoulder R", tag="__btn_sh_r", user_data=("BtnShoulderR", 1), width=300)
                 with dpg.table_row():
                     dpg.add_button(
-                        label="Trigger L", callback=self.button_pressed, user_data=("TriggerL", 1), width=300)
+                        label="Trigger L", tag="__btn_tr_l", user_data=("TriggerL", 1), width=300)
                     dpg.add_button(
-                        label="Trigger R", callback=self.button_pressed, user_data=("TriggerR", 1), width=300)
+                        label="Trigger R", tag="__btn_tr_r", user_data=("TriggerR", 1), width=300)
 
             with dpg.table(header_row=False):
                 dpg.add_table_column()
@@ -192,9 +198,9 @@ class MainWindow:
 
                         with dpg.table_row():
                             dpg.add_button(
-                                label="Back", callback=self.button_pressed, user_data=("BtnBack", 1), width=150)
+                                label="Back", tag="__btn_back", user_data=("BtnBack", 1), width=150)
                             dpg.add_button(
-                                label="Start", callback=self.button_pressed, user_data=("BtnStart", 1), width=150)
+                                label="Start", tag="__btn_start", user_data=("BtnStart", 1), width=150)
 
                         with dpg.table_row():
                             with dpg.group():
@@ -211,6 +217,26 @@ class MainWindow:
                         with dpg.group(horizontal=True):
                             dpg.add_spacer(width=60)
                             self.render_right_buttons()
+
+        tags = [
+            "__btn_X",
+            "__btn_Y",
+            "__btn_A",
+            "__btn_B",
+            "__btn_dpad_u",
+            "__btn_dpad_l",
+            "__btn_dpad_r",
+            "__btn_dpad_d",
+            "__btn_sh_l",
+            "__btn_sh_r",
+            "__btn_tr_l",
+            "__btn_tr_r",
+            "__btn_back",
+            "__btn_start",
+        ]
+
+        for tag in tags:
+            dpg.bind_item_handler_registry(tag, "__btn_handler")
 
 
 def main(argv):

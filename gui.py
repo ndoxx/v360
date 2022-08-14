@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import sys
-import dearpygui.dearpygui as gui
+import dearpygui.dearpygui as dpg
 from pathlib import Path
 import numpy as np
 from v360 import FFXController
@@ -57,12 +57,12 @@ class MainWindow:
         ctl_pos = pos / norm if norm > EPS else np.zeros(2)
         self.controller.set_movement(*ctl_pos)
 
-        gui.apply_transform(
-            "__stick_node", gui.create_translation_matrix(list(pos)))
+        dpg.apply_transform(
+            "__stick_node", dpg.create_translation_matrix(list(pos)))
 
     def on_mouse_down(self, sender, user_data):
-        if gui.is_item_hovered('__canvas'):
-            self.position = gui.get_drawing_mouse_pos()
+        if dpg.is_item_hovered('__stick_canvas'):
+            self.position = dpg.get_drawing_mouse_pos()
             self.update_stick()
 
     def on_mouse_release(self, sender, user_data):
@@ -70,20 +70,10 @@ class MainWindow:
         self.update_stick()
 
     def button_pressed(self, sender, app_data, user_data):
-        key = user_data
-        self.controller.set_value(key, 1)
+        key, value = user_data
+        self.controller.set_value(key, value)
 
-    def render_stick(self):
-        with gui.drawlist(width=self.size, height=self.size, tag="__canvas"):
-            # Background circle
-            gui.draw_circle(center=self.center,
-                            radius=self.outer_radius, color=self.color, thickness=self.thickness)
-            # Movable stick
-            with gui.draw_node(tag="__stick_node"):
-                gui.draw_circle(center=self.position,
-                                radius=self.inner_radius, fill=self.color)
-
-    def render_right_buttons(self):
+    def setup_themes(self):
         colors_rgb = [
             [254, 187, 40],
             [36,  103, 167],
@@ -91,57 +81,121 @@ class MainWindow:
             [152, 180, 70]
         ]
         for i, color in enumerate(colors_rgb):
-            with gui.theme(tag=f"__btn_theme_{i}"):
-                with gui.theme_component(gui.mvButton):
-                    gui.add_theme_color(gui.mvThemeCol_Text, [0, 0, 0])
-                    gui.add_theme_color(gui.mvThemeCol_Button, color)
-                    gui.add_theme_color(
-                        gui.mvThemeCol_ButtonActive, lighten(color, 1.5))
-                    gui.add_theme_color(
-                        gui.mvThemeCol_ButtonHovered, lighten(color, 1.3))
-                    gui.add_theme_style(gui.mvStyleVar_FrameRounding, 10)
-                    gui.add_theme_style(gui.mvStyleVar_FramePadding, 3, 3)
+            with dpg.theme(tag=f"__btn_theme_{i}"):
+                with dpg.theme_component(dpg.mvButton):
+                    dpg.add_theme_color(dpg.mvThemeCol_Text, [0, 0, 0])
+                    dpg.add_theme_color(dpg.mvThemeCol_Button, color)
+                    dpg.add_theme_color(
+                        dpg.mvThemeCol_ButtonActive, lighten(color, 1.5))
+                    dpg.add_theme_color(
+                        dpg.mvThemeCol_ButtonHovered, lighten(color, 1.3))
+                    dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10)
+                    dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 3, 3)
 
-        with gui.table(header_row=False):
-            gui.add_table_column()
-            gui.add_table_column()
-            gui.add_table_column()
+    def render_stick(self):
+        with dpg.drawlist(width=self.size, height=self.size, tag="__stick_canvas"):
+            # Background circle
+            dpg.draw_circle(center=self.center,
+                            radius=self.outer_radius, color=self.color, thickness=self.thickness)
+            # Movable stick
+            with dpg.draw_node(tag="__stick_node"):
+                dpg.draw_circle(center=self.position,
+                                radius=self.inner_radius, fill=self.color)
 
-            with gui.table_row():
-                gui.add_spacer()
-                gui.add_button(
-                    label=" Y ", callback=self.button_pressed, user_data="BtnY")
-                gui.bind_item_theme(gui.last_item(), "__btn_theme_0")
-                gui.add_spacer()
+    def render_right_buttons(self):
+        with dpg.table(header_row=False):
+            dpg.add_table_column()
+            dpg.add_table_column()
+            dpg.add_table_column()
 
-            with gui.table_row():
-                gui.add_button(
-                    label=" X ", callback=self.button_pressed, user_data="BtnX")
-                gui.bind_item_theme(gui.last_item(), "__btn_theme_1")
-                gui.add_spacer()
-                gui.add_button(
-                    label=" B ", callback=self.button_pressed, user_data="BtnB")
-                gui.bind_item_theme(gui.last_item(), "__btn_theme_2")
+            with dpg.table_row():
+                dpg.add_spacer()
+                dpg.add_button(
+                    label=" Y ", callback=self.button_pressed, user_data=("BtnY", 1))
+                dpg.bind_item_theme(dpg.last_item(), "__btn_theme_0")
+                dpg.add_spacer()
 
-            with gui.table_row():
-                gui.add_spacer()
-                gui.add_button(
-                    label=" A ", callback=self.button_pressed, user_data="BtnA")
-                gui.bind_item_theme(gui.last_item(), "__btn_theme_3")
-                gui.add_spacer()
+            with dpg.table_row():
+                dpg.add_button(
+                    label=" X ", callback=self.button_pressed, user_data=("BtnX", 1))
+                dpg.bind_item_theme(dpg.last_item(), "__btn_theme_1")
+                dpg.add_spacer()
+                dpg.add_button(
+                    label=" B ", callback=self.button_pressed, user_data=("BtnB", 1))
+                dpg.bind_item_theme(dpg.last_item(), "__btn_theme_2")
+
+            with dpg.table_row():
+                dpg.add_spacer()
+                dpg.add_button(
+                    label=" A ", callback=self.button_pressed, user_data=("BtnA", 1))
+                dpg.bind_item_theme(dpg.last_item(), "__btn_theme_3")
+                dpg.add_spacer()
+
+    def render_dpad(self):
+        with dpg.table(header_row=False):
+            dpg.add_table_column()
+            dpg.add_table_column()
+            dpg.add_table_column()
+
+            with dpg.table_row():
+                dpg.add_spacer()
+                dpg.add_button(
+                    label=" U ", callback=self.button_pressed, user_data=("Dpad", 1))
+                dpg.add_spacer()
+
+            with dpg.table_row():
+                dpg.add_button(
+                    label=" L ", callback=self.button_pressed, user_data=("Dpad", 4))
+                dpg.add_spacer()
+                dpg.add_button(
+                    label=" R ", callback=self.button_pressed, user_data=("Dpad", 8))
+
+            with dpg.table_row():
+                dpg.add_spacer()
+                dpg.add_button(
+                    label=" D ", callback=self.button_pressed, user_data=("Dpad", 2))
+                dpg.add_spacer()
 
     def render(self):
-        with gui.handler_registry():
-            gui.add_mouse_drag_handler(callback=self.on_mouse_down)
-            gui.add_mouse_click_handler(callback=self.on_mouse_down)
-            gui.add_mouse_release_handler(callback=self.on_mouse_release)
+        with dpg.handler_registry():
+            dpg.add_mouse_drag_handler(callback=self.on_mouse_down)
+            dpg.add_mouse_click_handler(callback=self.on_mouse_down)
+            dpg.add_mouse_release_handler(callback=self.on_mouse_release)
 
-        with gui.window(label="Gamepad", tag="__gamepad_window"):
-            with gui.table(header_row=False):
-                gui.add_table_column()
-                gui.add_table_column()
-                with gui.table_row():
-                    self.render_stick()
+        with dpg.window(label="Gamepad", tag="__gamepad_window"):
+            self.setup_themes()
+            with dpg.table(header_row=False):
+                dpg.add_table_column()
+                dpg.add_table_column()
+                with dpg.table_row():
+                    dpg.add_button(
+                        label="ShdL", callback=self.button_pressed, user_data=("BtnShoulderL", 1))
+                    dpg.add_button(
+                        label="ShdR", callback=self.button_pressed, user_data=("BtnShoulderR", 1))
+                with dpg.table_row():
+                    dpg.add_button(
+                        label="TrgL", callback=self.button_pressed, user_data=("TriggerL", 1))
+                    dpg.add_button(
+                        label="TrgR", callback=self.button_pressed, user_data=("TriggerR", 1))
+
+            with dpg.table(header_row=False):
+                dpg.add_table_column()
+                dpg.add_table_column()
+                with dpg.table_row():
+                    with dpg.table(header_row=False):
+                        dpg.add_table_column()
+                        dpg.add_table_column()
+
+                        with dpg.table_row():
+                            dpg.add_button(
+                                label="Back", callback=self.button_pressed, user_data=("BtnBack", 1))
+                            dpg.add_button(
+                                label="Start", callback=self.button_pressed, user_data=("BtnStart", 1))
+
+                        with dpg.table_row():
+                            self.render_dpad()
+                            self.render_stick()
+
                     self.render_right_buttons()
 
 
@@ -150,16 +204,16 @@ def main(argv):
     init_path = local / "gui.ini"
     window = MainWindow()
 
-    gui.create_context()
-    gui.configure_app(init_file=init_path, docking=True)
-    gui.create_viewport(title="v360 GUI", width=600, height=300)
-    gui.setup_dearpygui()
+    dpg.create_context()
+    dpg.configure_app(init_file=init_path, docking=True)
+    dpg.create_viewport(title="v360 dpg", width=600, height=300)
+    dpg.setup_dearpygui()
 
     window.render()
 
-    gui.show_viewport()
-    gui.start_dearpygui()
-    gui.destroy_context()
+    dpg.show_viewport()
+    dpg.start_dearpygui()
+    dpg.destroy_context()
 
 
 if __name__ == '__main__':
